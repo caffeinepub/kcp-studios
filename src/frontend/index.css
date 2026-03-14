@@ -1,0 +1,81 @@
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/assets/fonts/BricolageGrotesque.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('/assets/fonts/Figtree.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0.97 0.008 22;
+    --foreground: 0.14 0.025 22;
+    --card: 1 0 0;
+    --card-foreground: 0.14 0.025 22;
+    --popover: 1 0 0;
+    --popover-foreground: 0.14 0.025 22;
+    --primary: 0.35 0.16 22;
+    --primary-foreground: 0.98 0.005 0;
+    --secondary: 0.93 0.015 22;
+    --secondary-foreground: 0.25 0.05 22;
+    --muted: 0.95 0.01 22;
+    --muted-foreground: 0.52 0.05 22;
+    --accent: 0.65 0.09 220;
+    --accent-foreground: 0.98 0.005 0;
+    --destructive: 0.35 0.16 22;
+    --destructive-foreground: 0.98 0.005 0;
+    --border: 0.88 0.02 22;
+    --input: 0.88 0.02 22;
+    --ring: 0.35 0.16 22;
+    --radius: 0.5rem;
+    --chart-1: 0.35 0.16 22;
+    --chart-2: 0.5 0.12 220;
+    --chart-3: 0.6 0.1 150;
+    --chart-4: 0.7 0.1 60;
+    --chart-5: 0.55 0.13 280;
+    --sidebar: 0.97 0.008 22;
+    --sidebar-foreground: 0.14 0.025 22;
+    --sidebar-primary: 0.35 0.16 22;
+    --sidebar-primary-foreground: 0.98 0.005 0;
+    --sidebar-accent: 0.93 0.015 22;
+    --sidebar-accent-foreground: 0.25 0.05 22;
+    --sidebar-border: 0.88 0.02 22;
+    --sidebar-ring: 0.35 0.16 22;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Figtree', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-shadow-dark {
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .game-canvas {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
