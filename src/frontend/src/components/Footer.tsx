@@ -41,8 +41,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
           <div>
             <img
-              src="/assets/generated/polarix-logo-transparent.dim_400x200.png"
-              alt="Polarix Games"
+              src="/assets/uploads/Screenshot-2026-03-14-at-2.50.38-PM-1.png"
+              alt="KCP Studios"
               className="h-14 w-auto object-contain mb-4"
             />
             <p className="text-white/50 text-sm leading-relaxed">
@@ -111,7 +111,7 @@ export function Footer() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
         >
           <p className="text-white/35 text-sm">
-            © {year} Polarix Games. All rights reserved.
+            © {year} KCP Studios. All rights reserved.
           </p>
           <p className="text-white/35 text-sm flex items-center gap-1.5">
             Built with{" "}

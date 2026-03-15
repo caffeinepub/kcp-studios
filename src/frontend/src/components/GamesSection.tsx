@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArcticRunner } from "./games/ArcticRunner";
 import { PenguinCatch } from "./games/PenguinCatch";
+import { SaveThePrincess } from "./games/SaveThePrincess";
 
 const games = [
   {
@@ -23,6 +24,7 @@ const games = [
     img: "/assets/generated/carousel-arctic-runner.dim_1200x500.jpg",
     rating: "E for Everyone",
     bgColor: "#0d0d1a",
+    comingSoon: null,
   },
   {
     id: "penguin-catch",
@@ -33,6 +35,18 @@ const games = [
     img: "/assets/generated/carousel-penguin-catch.dim_1200x500.jpg",
     rating: "E for Everyone",
     bgColor: "#001a3a",
+    comingSoon: null,
+  },
+  {
+    id: "save-the-princess",
+    title: "Save the Princess",
+    description:
+      "Play as Blizzard the polar bear on a daring rescue mission! Race through icy kingdoms, stomp enemies, and collect snowflakes to save Princess Vix from the ice fortress!",
+    genre: "Platformer",
+    img: "/assets/generated/carousel-arctic-runner.dim_1200x500.jpg",
+    rating: "E for Everyone",
+    bgColor: "#0a0a1a",
+    comingSoon: null,
   },
 ];
 
@@ -82,7 +96,7 @@ export function GamesSection() {
             fun.
           </p>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {games.map((game, i) => (
             <motion.div
               key={game.id}
@@ -91,7 +105,7 @@ export function GamesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.15 }}
-              className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-brand-lg transition-all duration-300 hover:-translate-y-1"
+              className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-brand-lg transition-all duration-300 hover:-translate-y-1 relative"
               style={{ borderTop: "4px solid #8B0000" }}
             >
               <div className="relative h-48 overflow-hidden">
@@ -122,7 +136,7 @@ export function GamesSection() {
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="font-display text-2xl font-bold text-foreground mb-2">
+                <h3 className="font-display text-xl font-bold text-foreground mb-2">
                   {game.title}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
@@ -189,6 +203,28 @@ export function GamesSection() {
           {openGame === "penguin-catch" && (
             <PenguinCatch
               onGameOver={(s) => handleGameOver("penguin-catch", s)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={openGame === "save-the-princess"}
+        onOpenChange={(o) => !o && setOpenGame(null)}
+      >
+        <DialogContent
+          className="max-w-4xl w-full p-6"
+          data-ocid="games.save_the_princess.dialog"
+          style={{ background: "#0a0a1a" }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-white font-display text-2xl">
+              Save the Princess
+            </DialogTitle>
+          </DialogHeader>
+          {openGame === "save-the-princess" && (
+            <SaveThePrincess
+              onGameOver={(s) => handleGameOver("save-the-princess", s)}
             />
           )}
         </DialogContent>

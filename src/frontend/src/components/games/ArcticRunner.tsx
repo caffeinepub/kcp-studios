@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
 const W = 800;
 const H = 320;
@@ -23,9 +24,18 @@ interface GS {
   speed: number;
   frame: number;
   nextObstacle: number;
+  lives: number;
+  bonusItems: BonusItem[];
+  nextBonus: number;
 }
 
-function makeGS(status: GS["status"] = "idle"): GS {
+interface BonusItem {
+  x: number;
+  y: number;
+  collected: boolean;
+}
+
+function makeGS(status: GS["status"] = "idle", lives = 1): GS {
   return {
     status,
     bearY: GROUND_Y - BEAR_SIZE,
@@ -35,22 +45,36 @@ function makeGS(status: GS["status"] = "idle"): GS {
     speed: 3,
     frame: 0,
     nextObstacle: 90,
+    lives,
+    bonusItems: [],
+    nextBonus: 120,
   };
 }
 
 export function ArcticRunner({
   onGameOver,
 }: { onGameOver?: (score: number) => void }) {
+  const { extraLives, doubleLuck } = useAdmin();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<GS>(makeGS());
   const rafRef = useRef<number>(0);
   const cbRef = useRef(onGameOver);
+  const extraLivesRef = useRef(extraLives);
+  const doubleLuckRef = useRef(doubleLuck);
+
   useEffect(() => {
     cbRef.current = onGameOver;
   });
+  useEffect(() => {
+    extraLivesRef.current = extraLives;
+  }, [extraLives]);
+  useEffect(() => {
+    doubleLuckRef.current = doubleLuck;
+  }, [doubleLuck]);
 
   const startGame = useCallback(() => {
-    gsRef.current = makeGS("playing");
+    const lives = extraLivesRef.current ? 5 : 1;
+    gsRef.current = makeGS("playing", lives);
   }, []);
 
   const tryJump = useCallback(() => {
@@ -258,6 +282,18 @@ export function ArcticRunner({
       ctx!.strokeRect(obs.x, GROUND_Y - obs.h, obs.w, obs.h);
     }
 
+    function drawBonus(item: BonusItem) {
+      if (item.collected) return;
+      ctx!.save();
+      ctx!.fillStyle = "#FFD700";
+      ctx!.shadowColor = "#FFD700";
+      ctx!.shadowBlur = 10;
+      ctx!.font = "bold 20px sans-serif";
+      ctx!.textAlign = "center";
+      ctx!.fillText("★", item.x, item.y);
+      ctx!.restore();
+    }
+
     function collides(obs: Obstacle, by: number) {
       const m = 10;
       return (
@@ -270,8 +306,10 @@ export function ArcticRunner({
 
     function loop() {
       const s = gsRef.current;
+      const dl = doubleLuckRef.current;
       ctx!.clearRect(0, 0, W, H);
       drawBg(s.frame, s.speed);
+
       if (s.status === "idle") {
         drawBear(BEAR_X, s.bearY, s.frame);
         s.frame++;
@@ -301,19 +339,50 @@ export function ArcticRunner({
           s.obstacles.push({ x: W + 20, w: 28 + Math.random() * 22, h });
           s.nextObstacle = 55 + Math.random() * 55;
         }
+        // Bonus stars (2x luck = spawn twice as often)
+        s.nextBonus--;
+        const bonusInterval = dl ? 60 : 120;
+        if (s.nextBonus <= 0) {
+          s.bonusItems.push({
+            x: W + 20,
+            y: GROUND_Y - BEAR_SIZE - 20 - Math.random() * 60,
+            collected: false,
+          });
+          s.nextBonus = bonusInterval + Math.random() * bonusInterval;
+        }
         s.obstacles = s.obstacles
           .map((o) => ({ ...o, x: o.x - s.speed }))
           .filter((o) => o.x > -80);
+        s.bonusItems = s.bonusItems
+          .map((b) => ({ ...b, x: b.x - s.speed }))
+          .filter((b) => b.x > -40);
+        // Collect bonus items
+        for (const b of s.bonusItems) {
+          if (
+            !b.collected &&
+            Math.abs(b.x - (BEAR_X + BEAR_SIZE / 2)) < 30 &&
+            Math.abs(b.y - (s.bearY + BEAR_SIZE / 2)) < 40
+          ) {
+            b.collected = true;
+            s.score += dl ? 20 : 10;
+          }
+        }
         for (const obs of s.obstacles) {
           if (collides(obs, s.bearY)) {
-            s.status = "gameover";
-            cbRef.current?.(s.score);
+            s.lives--;
+            if (s.lives <= 0) {
+              s.status = "gameover";
+              cbRef.current?.(s.score);
+            } else {
+              s.obstacles = [];
+            }
             break;
           }
         }
         s.score = Math.floor(s.frame / 8);
         s.speed = 3 + Math.floor(s.frame / 250) * 0.6;
         for (const obs of s.obstacles) drawObs(obs);
+        for (const b of s.bonusItems) drawBonus(b);
         drawBear(BEAR_X, s.bearY, s.frame);
         ctx!.fillStyle = "rgba(0,0,0,0.45)";
         ctx!.fillRect(W - 155, 10, 145, 44);
@@ -321,6 +390,20 @@ export function ArcticRunner({
         ctx!.font = "bold 24px sans-serif";
         ctx!.textAlign = "right";
         ctx!.fillText(`Score: ${s.score}`, W - 16, 40);
+        if (s.lives > 1) {
+          ctx!.fillStyle = "rgba(0,0,0,0.45)";
+          ctx!.fillRect(8, 10, 120, 36);
+          ctx!.fillStyle = "#f87171";
+          ctx!.font = "bold 18px sans-serif";
+          ctx!.textAlign = "left";
+          ctx!.fillText("\u2665".repeat(s.lives), 16, 32);
+        }
+        if (dl) {
+          ctx!.fillStyle = "rgba(255,215,0,0.9)";
+          ctx!.font = "bold 13px sans-serif";
+          ctx!.textAlign = "left";
+          ctx!.fillText("⚡ 2X LUCK", 10, H - 8);
+        }
       } else {
         for (const obs of s.obstacles) drawObs(obs);
         drawBear(BEAR_X, s.bearY, s.frame);
@@ -359,6 +442,14 @@ export function ArcticRunner({
       />
       <p className="text-center text-sm text-muted-foreground mt-2">
         SPACE / ↑ to jump &nbsp;|&nbsp; Tap on mobile
+        {extraLives && (
+          <span className="ml-2 text-green-400 font-bold">
+            +5 Lives Active!
+          </span>
+        )}
+        {doubleLuck && (
+          <span className="ml-2 text-yellow-400 font-bold">⚡ 2x Luck!</span>
+        )}
       </p>
     </div>
   );

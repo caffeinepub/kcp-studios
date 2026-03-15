@@ -1,34 +1,14 @@
 import { Users } from "lucide-react";
 import { motion } from "motion/react";
+import { characters } from "../data/characters";
 
-const characters = [
-  {
-    name: "Blizzard",
-    role: "The Arctic Adventurer",
-    lore: "Once a humble polar bear from the Frostheim Mountains, Blizzard discovered an ancient map hidden in the ice. Now he races across the frozen north, seeking the legendary Crystal of the Eternal Cold.",
-    img: "/assets/generated/character-polar-bear-transparent.dim_400x400.png",
-    game: "Arctic Runner",
-    stats: { Speed: 85, Strength: 90, Courage: 95 },
-  },
-  {
-    name: "Pip",
-    role: "Ocean Guardian",
-    lore: "Born beneath the waves of the Polar Sea, Pip has protected the ocean's bounty since before memory. Quick on his feet and sharp of mind, he ensures no fish goes uncounted — and no rock goes un-dodged.",
-    img: "/assets/generated/character-penguin-transparent.dim_400x400.png",
-    game: "Penguin Catch",
-    stats: { Speed: 95, Agility: 88, Heart: 92 },
-  },
-  {
-    name: "Vix",
-    role: "Mystical Ice Mage",
-    lore: "Vix wandered out of the ancient Aurora Forest carrying secrets older than the ice itself. She wields frost magic with graceful precision, and some say her eyes can see the future frozen in every snowflake.",
-    img: "/assets/generated/character-arctic-fox-transparent.dim_400x400.png",
-    game: "Frost Fox Chronicles",
-    stats: { Magic: 98, Wisdom: 94, Mystery: 97 },
-  },
-];
+interface CharactersSectionProps {
+  onSelectCharacter: (name: string) => void;
+}
 
-export function CharactersSection() {
+export function CharactersSection({
+  onSelectCharacter,
+}: CharactersSectionProps) {
   return (
     <section
       id="characters"
@@ -71,7 +51,7 @@ export function CharactersSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.12 }}
               whileHover={{ y: -6 }}
-              className="relative rounded-2xl overflow-hidden group cursor-default"
+              className="relative rounded-2xl overflow-hidden group"
               style={{
                 background: "#1a0505",
                 border: "1px solid rgba(139,0,0,0.3)",
@@ -112,7 +92,7 @@ export function CharactersSection() {
                 <p className="text-white/65 text-sm leading-relaxed mb-5">
                   {char.lore}
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-2 mb-6">
                   {Object.entries(char.stats).map(([stat, val]) => (
                     <div key={stat}>
                       <div className="flex justify-between text-xs text-white/50 mb-1">
@@ -137,6 +117,31 @@ export function CharactersSection() {
                     </div>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  data-ocid={`characters.view_profile_button.${i + 1}`}
+                  onClick={() => onSelectCharacter(char.name)}
+                  className="w-full py-2.5 rounded-lg text-sm font-bold tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: "transparent",
+                    border: "1.5px solid rgba(139,0,0,0.7)",
+                    color: "#cc2222",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "rgba(139,0,0,0.2)";
+                    (e.currentTarget as HTMLButtonElement).style.color =
+                      "#ff4444";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color =
+                      "#cc2222";
+                  }}
+                >
+                  View Profile →
+                </button>
               </div>
             </motion.div>
           ))}

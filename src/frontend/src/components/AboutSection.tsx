@@ -111,7 +111,7 @@ export function AboutSection() {
             }}
           />
           <p className="font-display text-2xl md:text-4xl font-extrabold text-white relative mb-2">
-            “We don’t make games.
+            “We don't make games.
           </p>
           <p
             className="font-display text-2xl md:text-4xl font-extrabold relative mb-6"
@@ -120,7 +120,7 @@ export function AboutSection() {
             We make memories.”
           </p>
           <p className="text-white/50 text-base tracking-widest uppercase font-medium">
-            — Polarix Games Studio
+            — KCP Studios
           </p>
         </motion.div>
       </div>

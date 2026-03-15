@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
 const W = 800;
 const H = 420;
@@ -12,7 +13,7 @@ interface Item {
   x: number;
   y: number;
   vy: number;
-  type: "fish" | "rock";
+  type: "fish" | "rock" | "star";
   size: number;
   wobble: number;
 }
@@ -29,12 +30,16 @@ interface PGS {
   touchDX: number;
 }
 
-function makeGS(status: PGS["status"] = "idle", keys = new Set<string>()): PGS {
+function makeGS(
+  status: PGS["status"] = "idle",
+  keys = new Set<string>(),
+  lives = 3,
+): PGS {
   return {
     status,
     px: W / 2 - PENGUIN_W / 2,
     score: 0,
-    lives: 3,
+    lives,
     items: [],
     frame: 0,
     nextItem: 60,
@@ -46,17 +51,28 @@ function makeGS(status: PGS["status"] = "idle", keys = new Set<string>()): PGS {
 export function PenguinCatch({
   onGameOver,
 }: { onGameOver?: (score: number) => void }) {
+  const { extraLives, doubleLuck } = useAdmin();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<PGS>(makeGS());
   const rafRef = useRef<number>(0);
   const cbRef = useRef(onGameOver);
   const txRef = useRef(0);
+  const extraLivesRef = useRef(extraLives);
+  const doubleLuckRef = useRef(doubleLuck);
+
   useEffect(() => {
     cbRef.current = onGameOver;
   });
+  useEffect(() => {
+    extraLivesRef.current = extraLives;
+  }, [extraLives]);
+  useEffect(() => {
+    doubleLuckRef.current = doubleLuck;
+  }, [doubleLuck]);
 
   const startGame = useCallback(() => {
-    gsRef.current = makeGS("playing", gsRef.current.keys);
+    const lives = extraLivesRef.current ? 5 : 3;
+    gsRef.current = makeGS("playing", gsRef.current.keys, lives);
   }, []);
 
   useEffect(() => {
@@ -239,6 +255,17 @@ export function PenguinCatch({
     }
 
     function drawItem(item: Item) {
+      if (item.type === "star") {
+        ctx!.save();
+        ctx!.fillStyle = "#FFD700";
+        ctx!.shadowColor = "#FFD700";
+        ctx!.shadowBlur = 12;
+        ctx!.font = "bold 26px sans-serif";
+        ctx!.textAlign = "center";
+        ctx!.fillText("★", item.x, item.y);
+        ctx!.restore();
+        return;
+      }
       if (item.type === "fish") {
         const w = Math.sin(item.wobble) * 0.2;
         ctx!.save();
@@ -283,7 +310,7 @@ export function PenguinCatch({
       }
     }
 
-    function drawHUD(score: number, lives: number) {
+    function drawHUD(score: number, lives: number, dl: boolean) {
       ctx!.fillStyle = "rgba(0,0,0,0.5)";
       ctx!.fillRect(8, 8, 160, 48);
       ctx!.fillStyle = "#fff";
@@ -291,19 +318,28 @@ export function PenguinCatch({
       ctx!.textAlign = "left";
       ctx!.fillText(`Score: ${score}`, 18, 38);
       ctx!.fillStyle = "rgba(0,0,0,0.5)";
-      ctx!.fillRect(W - 130, 8, 122, 48);
+      ctx!.fillRect(W - 150, 8, 142, 48);
       ctx!.fillStyle = "#ff4444";
-      ctx!.font = "bold 26px sans-serif";
+      ctx!.font = "bold 22px sans-serif";
       ctx!.textAlign = "right";
+      const maxHearts = Math.max(lives, 3);
       ctx!.fillText(
-        "\u2665".repeat(lives) + "\u2661".repeat(Math.max(0, 3 - lives)),
+        "\u2665".repeat(lives) +
+          "\u2661".repeat(Math.max(0, maxHearts - lives)),
         W - 14,
         40,
       );
+      if (dl) {
+        ctx!.fillStyle = "rgba(255,215,0,0.9)";
+        ctx!.font = "bold 13px sans-serif";
+        ctx!.textAlign = "left";
+        ctx!.fillText("⚡ 2X LUCK", 10, H - 8);
+      }
     }
 
     function loop() {
       const s = gsRef.current;
+      const dl = doubleLuckRef.current;
       ctx!.clearRect(0, 0, W, H);
       drawBg(s.frame);
       if (s.status === "idle") {
@@ -331,13 +367,28 @@ export function PenguinCatch({
           s.px = Math.max(0, Math.min(W - PENGUIN_W, s.px + s.touchDX * SPD));
         s.nextItem--;
         if (s.nextItem <= 0) {
-          const isFish = Math.random() < 0.65;
+          // 2x luck: higher fish ratio + chance of star bonus
+          const fishChance = dl ? 0.82 : 0.65;
+          const rand = Math.random();
+          let type: "fish" | "rock" | "star";
+          if (dl && rand < 0.12) {
+            type = "star";
+          } else if (rand < fishChance) {
+            type = "fish";
+          } else {
+            type = "rock";
+          }
           s.items.push({
             x: 30 + Math.random() * (W - 60),
             y: -20,
             vy: 2 + Math.random() * 2.5 + Math.floor(s.frame / 500) * 0.5,
-            type: isFish ? "fish" : "rock",
-            size: isFish ? 14 + Math.random() * 6 : 12 + Math.random() * 8,
+            type,
+            size:
+              type === "star"
+                ? 16
+                : type === "fish"
+                  ? 14 + Math.random() * 6
+                  : 12 + Math.random() * 8,
             wobble: 0,
           });
           s.nextItem = 40 + Math.random() * 40;
@@ -354,6 +405,7 @@ export function PenguinCatch({
             item.y > GROUND_Y - PENGUIN_H - 10
           ) {
             if (item.type === "fish") s.score += 10;
+            else if (item.type === "star") s.score += 30;
             else {
               s.lives--;
               if (s.lives <= 0) {
@@ -366,7 +418,7 @@ export function PenguinCatch({
         s.items = next;
         for (const item of s.items) drawItem(item);
         drawPenguin(s.px, s.frame);
-        drawHUD(s.score, s.lives);
+        drawHUD(s.score, s.lives, dl);
       } else {
         for (const item of s.items) drawItem(item);
         drawPenguin(s.px, s.frame);
@@ -409,6 +461,14 @@ export function PenguinCatch({
       <p className="text-center text-sm text-muted-foreground mt-2">
         ← → / A D to move &nbsp;|&nbsp; Catch fish, dodge rocks &nbsp;|&nbsp;
         Touch &amp; drag on mobile
+        {extraLives && (
+          <span className="ml-2 text-green-400 font-bold">
+            +5 Lives Active!
+          </span>
+        )}
+        {doubleLuck && (
+          <span className="ml-2 text-yellow-400 font-bold">⚡ 2x Luck!</span>
+        )}
       </p>
     </div>
   );
